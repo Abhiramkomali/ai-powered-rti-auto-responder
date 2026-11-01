@@ -1,36 +1,39 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# AI-Powered RTI Auto-Responder
 
-## Getting Started
+A Next.js application to help citizens submit and track Right to Information (RTI) requests and help public authority officers process them. AI assistance is limited to classification and preparation of cited response drafts. Authorized officers retain responsibility for review, approval, and issuance.
 
-First, run the development server:
+## Project status
+
+The repository currently contains the Next.js App Router starter plus the approved architecture and shared TypeScript contracts. Authentication, database integration, AI workflows, and application portals have not yet been implemented.
+
+## Architecture and contribution
+
+- [Architecture and foundation](./docs/architecture.md)
+- [API contracts](./docs/api-contracts.md)
+- [Team ownership and integration](./docs/team-ownership.md)
+
+Canonical shared contracts live in:
+
+- `src/lib/domain/requests.ts` — request statuses and permitted transitions.
+- `src/lib/domain/permissions.ts` — role names, permission names, and role-to-permission mapping.
+- `src/lib/contracts/api.ts` — shared API DTOs and response envelope types.
+
+Do not redefine those contracts in feature code or documentation. Changes follow the communication and review process in [team ownership](./docs/team-ownership.md).
+
+## Current stack
+
+The starter uses Next.js App Router, TypeScript, and Tailwind CSS. PostgreSQL, Prisma, Auth.js, shadcn/ui, and Gemini are planned; no additional packages have been added as part of this foundation.
+
+## Local development
+
+Install dependencies with the package manager in use for this repository, then run:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+The development server is available at [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## RTI workflow notice
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Deadline calculation, exceptions, fees, transfers, and disclosure rules must follow the RTI Act, applicable rules, and the relevant public authority's procedures. The system must select and record the applicable rule for each request; it must not apply a single deadline to every case. The legal workflow described in the architecture is a design baseline and must be verified against current authoritative requirements before production use.
