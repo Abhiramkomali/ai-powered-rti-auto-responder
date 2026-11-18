@@ -13,15 +13,19 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "AI-Powered RTI Auto-Responder",
+  title: {
+    default: "Soochna | AI-Powered RTI Services",
+    template: "%s | Soochna",
+  },
   description:
-    "Submit and track Right to Information requests and support accountable public authority workflows.",
+    "A digital foundation for RTI requests, application tracking, and human-led public authority workflows.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
+      data-scroll-behavior="smooth"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">{children}</body>

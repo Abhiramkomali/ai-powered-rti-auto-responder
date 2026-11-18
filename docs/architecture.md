@@ -4,7 +4,7 @@
 
 The application supports a citizen portal and a government-officer portal for RTI request submission, processing, tracking, document handling, and analytics. It is planned for Next.js App Router, TypeScript, Tailwind CSS, shadcn/ui, PostgreSQL, Prisma, Auth.js, and Gemini.
 
-The repository currently has only the Next.js starter. This foundation defines contracts and boundaries; it does not implement authentication, database access, AI, uploads, or portal pages.
+The repository includes a public landing page and placeholder App Router pages for the planned citizen and officer portals. This foundation defines contracts and boundaries; it does not implement authentication, database access, AI, uploads, or functional portal workflows.
 
 Principles:
 
@@ -102,4 +102,3 @@ Index request reference, department/status queues, assigned officer, and due dat
 ## API conventions
 
 The API is versioned under `/api/v1` and uses the success/error envelope and status mapping documented in `docs/api-contracts.md` and typed in `src/lib/contracts/api.ts`. Use explicit domain operations (assignment, transfer, review, approval, issuance) instead of generic mutation endpoints.
-

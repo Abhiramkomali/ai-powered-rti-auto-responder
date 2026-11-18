@@ -1,0 +1,62 @@
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum RequestStatus {
+  DRAFT
+  SUBMITTED
+  ROUTING
+  ASSIGNED
+  UNDER_REVIEW
+  AWAITING_FEE
+  AWAITING_THIRD_PARTY
+  TRANSFERRED
+  DRAFTING_RESPONSE
+  AWAITING_APPROVAL
+  APPROVED
+  RESPONSE_ISSUED
+  CLOSED
+  WITHDRAWN
+}
+
+enum ResponseFormat {
+  electronic
+  physical
+}
+
+model RtiRequest {
+  id              String         @id @default(cuid())
+  referenceNumber String         @unique
+
+  fullName        String
+  email           String
+  mobile          String
+  address         String
+  state           String
+  district        String
+  pinCode         String
+
+  departmentId    String
+  subject         String
+  description     String
+  dateFrom        DateTime?      @db.Date
+  dateTo          DateTime?      @db.Date
+  responseFormat  ResponseFormat
+
+  status          RequestStatus  @default(SUBMITTED)
+
+  createdAt       DateTime       @default(now())
+  submittedAt     DateTime       @default(now())
+
+  @@index([email])
+  @@index([departmentId])
+  @@index([status])
+  @@index([createdAt])
+}

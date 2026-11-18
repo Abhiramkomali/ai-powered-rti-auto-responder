@@ -4,7 +4,7 @@ A Next.js application to help citizens submit and track Right to Information (RT
 
 ## Project status
 
-The repository currently contains the Next.js App Router starter plus the approved architecture and shared TypeScript contracts. Authentication, database integration, AI workflows, and application portals have not yet been implemented.
+The repository contains a responsive public landing page and foundation-stage placeholders for the planned citizen and officer routes, alongside the approved architecture and shared TypeScript contracts. The placeholders do not process accounts or requests. Authentication, database integration, AI workflows, and functional application portals have not yet been implemented.
 
 ## Architecture and contribution
 
