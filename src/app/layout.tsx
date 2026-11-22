@@ -21,7 +21,11 @@ export const metadata: Metadata = {
     "A digital foundation for RTI requests, application tracking, and human-led public authority workflows.",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
   return (
     <html
       lang="en"

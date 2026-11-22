@@ -164,20 +164,6 @@ function getFileValidationError(file: File): string | null {
   return null;
 }
 
-function createDemoReference(): string {
-  const date = new Date();
-  const datePart = [
-    date.getFullYear(),
-    String(date.getMonth() + 1).padStart(2, "0"),
-    String(date.getDate()).padStart(2, "0"),
-  ].join("");
-  const randomPart = window.crypto.getRandomValues(new Uint32Array(1))[0]
-    .toString(10)
-    .padStart(10, "0")
-    .slice(-6);
-
-  return `DEMO-RTI-${datePart}-${randomPart}`;
-}
 
 function FieldError({ id, children }: { id: string; children?: string }) {
   if (!children) return null;
@@ -227,6 +213,26 @@ function formatDate(value: string): string {
   const [year, month, day] = value.split("-");
   return `${day}/${month}/${year}`;
 }
+type CreateRequestApiResult =
+  | {
+      ok: true;
+      data: {
+        id: string;
+        referenceNumber: string;
+        status: string;
+        submittedAt: string;
+      };
+      requestId: string;
+    }
+  | {
+      ok: false;
+      error: {
+        code: string;
+        message: string;
+        fieldErrors?: Record<string, string[]>;
+      };
+      requestId: string;
+    };
 
 export function CitizenRequestForm() {
   const [values, setValues] = useState<FormValues>(initialValues);
@@ -235,7 +241,9 @@ export function CitizenRequestForm() {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [fileError, setFileError] = useState("");
   const [declarationAccepted, setDeclarationAccepted] = useState(false);
-  const [demoReference, setDemoReference] = useState("");
+  const [referenceNumber, setReferenceNumber] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const errorSummaryRef = useRef<HTMLDivElement>(null);
 
@@ -290,49 +298,98 @@ export function CitizenRequestForm() {
     setFileError("");
   }
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  event.preventDefault();
 
-    if (step === "form") {
-      const nextErrors = validateForm(values);
-      setErrors(nextErrors);
-      if (Object.keys(nextErrors).length > 0 || fileError) {
-        window.requestAnimationFrame(() => errorSummaryRef.current?.focus());
-        return;
-      }
-      setStep("review");
-      window.scrollTo({ top: 0, behavior: "smooth" });
+  if (step === "form") {
+    const nextErrors = validateForm(values);
+    setErrors(nextErrors);
+
+    if (Object.keys(nextErrors).length > 0 || fileError) {
+      window.requestAnimationFrame(() => errorSummaryRef.current?.focus());
       return;
     }
 
-    if (step === "review") {
-      if (!declarationAccepted) {
-        setErrors((current) => ({
-          ...current,
-          declaration: "Confirm the declaration before creating a demo reference.",
-        }));
-        return;
+    setStep("review");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    return;
+  }
+
+  if (step === "review") {
+    if (!declarationAccepted) {
+      setErrors((current) => ({
+        ...current,
+        declaration: "Confirm the declaration before submitting your prototype request.",
+      }));
+      return;
+    }
+
+    setIsSubmitting(true);
+    setSubmitError("");
+
+    try {
+      // Normalize the mobile number to the 10-digit format expected by the API.
+      const normalizedMobile = values.mobile
+        .trim()
+        .replace(/^\+91[\s-]?/, "")
+        .replace(/[\s-]/g, "");
+
+      const response = await fetch("/api/requests", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          ...values,
+          mobile: normalizedMobile,
+        }),
+      });
+
+      const result =
+        (await response.json()) as CreateRequestApiResult;
+
+      if (!response.ok || !result.ok) {
+        throw new Error(
+          result.ok
+            ? "Unable to save your request. Please try again."
+            : result.error.message,
+        );
       }
 
-      setDemoReference(createDemoReference());
+      // Store the real reference returned by the backend.
+      setReferenceNumber(result.data.referenceNumber);
+
       setValues(initialValues);
       setSelectedFiles([]);
       setDeclarationAccepted(false);
       setErrors({});
       setFileError("");
-      if (fileInputRef.current) fileInputRef.current.value = "";
+
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+
       setStep("confirmation");
       window.scrollTo({ top: 0, behavior: "smooth" });
+    } catch (error) {
+      setSubmitError(
+        error instanceof Error
+          ? error.message
+          : "Something went wrong. Please try again.",
+      );
+    } finally {
+      setIsSubmitting(false);
     }
   }
+}
 
-  function startAnotherDemo() {
-    setDemoReference("");
-    setStep("form");
-    setErrors({});
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }
-
+function startAnotherDemo() {
+  setReferenceNumber("");
+  setSubmitError("");
+  setStep("form");
+  setErrors({});
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
   const selectedDepartment = departments.find(
     (department) => department.id === values.departmentId,
   );
@@ -418,7 +475,7 @@ export function CitizenRequestForm() {
               </p>
               <div className="request-demo-reference">
                 <span>DEMONSTRATION REFERENCE</span>
-                <strong>{demoReference}</strong>
+                <strong>{referenceNumber}</strong>
                 <small>This reference is not stored. Note it now if you need it for this demo.</small>
               </div>
               <div className="request-confirmation-actions">
@@ -818,12 +875,12 @@ export function CitizenRequestForm() {
                 </>
               ) : (
                 <>
-                  <div className="request-review-warning" role="note">
-                    <span className="request-notice-icon" aria-hidden="true">i</span>
-                    <p>
-                      This review is only for the local demonstration. Confirming creates a demo reference in your browser; it does not transmit this request.
-                    </p>
+                {submitError && (
+                  <div className="request-error-summary" role="alert">
+                    <strong>Request submission failed.</strong>
+                      <span>{submitError}</span>
                   </div>
+                )}
 
                   <FormSection
                     description="Check the details entered in this demonstration form."
@@ -897,33 +954,37 @@ export function CitizenRequestForm() {
                     <FieldError id="declaration-error">{errors.declaration}</FieldError>
                   </div>
 
-                  <div className="request-form-actions request-review-actions">
+                                  <div className="request-form-actions request-review-actions">
                     <button
                       className="button button--text"
                       onClick={() => {
                         setStep("form");
                         setDeclarationAccepted(false);
                         setErrors({});
+                        setSubmitError("");
                         window.scrollTo({ top: 0, behavior: "smooth" });
                       }}
                       type="button"
                     >
-                      <span aria-hidden="true">←</span> Edit details
+                      <span aria-hidden="true">←</span>
+                      Back to edit
                     </button>
-                    <button className="button button--navy" type="submit">
-                      Confirm demonstration
+
+                    <button
+                      className="button button--navy"
+                      disabled={!declarationAccepted || isSubmitting}
+                      type="submit"
+                    >
+                      {isSubmitting ? "Submitting..." : "Submit request"}
+                      <span aria-hidden="true">→</span>
                     </button>
                   </div>
-                  <p className="request-final-note">
-                    This will generate a fictional reference in your browser only. It will not submit an official application.
-                  </p>
                 </>
               )}
             </form>
           )}
         </div>
       </main>
-      <SiteFooter />
     </>
   );
 }

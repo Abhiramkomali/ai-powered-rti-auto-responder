@@ -3,13 +3,13 @@ import { randomBytes, randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
 
 import { prisma } from "@/lib/prisma";
-import { createRequestSchema } from "@/lib/validations/request";
+import { createRequestSchema } from "@/lib/request";
 import type { ApiResponse } from "@/lib/contracts/api";
 
 export async function POST(request: Request) {
   const requestId = randomUUID();
 
-  // 1. Check that the client sent JSON.
+  // Check the request content type.
   if (!request.headers.get("content-type")?.includes("application/json")) {
     return NextResponse.json<ApiResponse<never>>(
       {
@@ -24,7 +24,7 @@ export async function POST(request: Request) {
     );
   }
 
-  // 2. Read the submitted JSON.
+  // Read the submitted JSON.
   let body: unknown;
 
   try {
@@ -43,19 +43,18 @@ export async function POST(request: Request) {
     );
   }
 
-  // 3. Validate the submitted information using Zod.
+  // Validate the data using Zod.
   const result = createRequestSchema.safeParse(body);
 
   if (!result.success) {
-    const fieldErrors = result.error.issues.reduce<Record<string, string[]>>(
-      (errors, issue) => {
-        const field = String(issue.path[0] ?? "general");
-        errors[field] ??= [];
-        errors[field].push(issue.message);
-        return errors;
-      },
-      {},
-    );
+    const fieldErrors = result.error.issues.reduce<
+      Record<string, string[]>
+    >((errors, issue) => {
+      const field = String(issue.path[0] ?? "general");
+      errors[field] ??= [];
+      errors[field].push(issue.message);
+      return errors;
+    }, {});
 
     return NextResponse.json<ApiResponse<never>>(
       {
@@ -71,14 +70,14 @@ export async function POST(request: Request) {
     );
   }
 
-  // 4. Generate a unique-looking RTI reference number.
+  // Generate the RTI reference number.
   const referenceNumber = `RTI-${new Date()
     .toISOString()
     .slice(0, 10)
     .replaceAll("-", "")}-${randomBytes(3).toString("hex").toUpperCase()}`;
 
   try {
-    // 5. Save the validated request in PostgreSQL.
+    // Save the request in PostgreSQL.
     const savedRequest = await prisma.rtiRequest.create({
       data: {
         referenceNumber,
@@ -102,7 +101,7 @@ export async function POST(request: Request) {
       },
     });
 
-    // 6. Return the saved request details.
+    // Return the saved request information.
     const response: ApiResponse<{
       id: string;
       referenceNumber: string;

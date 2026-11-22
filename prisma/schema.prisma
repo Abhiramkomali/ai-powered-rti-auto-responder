@@ -1,4 +1,3 @@
-
 generator client {
   provider = "prisma-client"
   output   = "../src/generated/prisma"
@@ -31,32 +30,103 @@ enum ResponseFormat {
   physical
 }
 
+enum UserRole {
+  CITIZEN
+  APIO
+  DEALING_OFFICER
+  PIO
+  FIRST_APPELLATE_AUTHORITY
+  DEPARTMENT_ADMIN
+  PLATFORM_ADMIN
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+
+  passwordHash String?
+  role         UserRole @default(CITIZEN)
+  isActive     Boolean  @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  accounts Account[]
+  sessions Session[]
+  requests RtiRequest[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
 model RtiRequest {
-  id              String         @id @default(cuid())
-  referenceNumber String         @unique
+  id              String @id @default(cuid())
+  referenceNumber String @unique
 
-  fullName        String
-  email           String
-  mobile          String
-  address         String
-  state           String
-  district        String
-  pinCode         String
+  userId   String?
+  user     User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+  fullName String
+  email    String
+  mobile   String
+  address  String
+  state    String
+  district String
+  pinCode  String
 
-  departmentId    String
-  subject         String
-  description     String
-  dateFrom        DateTime?      @db.Date
-  dateTo          DateTime?      @db.Date
-  responseFormat  ResponseFormat
+  departmentId   String
+  subject        String
+  description    String
+  dateFrom       DateTime?      @db.Date
+  dateTo         DateTime?      @db.Date
+  responseFormat ResponseFormat
 
-  status          RequestStatus  @default(SUBMITTED)
+  status RequestStatus @default(SUBMITTED)
 
-  createdAt       DateTime       @default(now())
-  submittedAt     DateTime       @default(now())
+  createdAt   DateTime @default(now())
+  submittedAt DateTime @default(now())
 
   @@index([email])
   @@index([departmentId])
   @@index([status])
   @@index([createdAt])
+  @@index([userId])
 }
