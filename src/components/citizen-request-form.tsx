@@ -1,5 +1,5 @@
 "use client";
-
+import { departments } from "@/lib/domain/departments";
 import Link from "next/link";
 import {
   useRef,
@@ -12,14 +12,7 @@ import {
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 
-const departments = [
-  { id: "public-works", name: "Public Works Department" },
-  { id: "education", name: "Education Department" },
-  { id: "health", name: "Health Department" },
-  { id: "revenue", name: "Revenue Department" },
-  { id: "municipal-administration", name: "Municipal Administration" },
-  { id: "transport", name: "Transport Department" },
-] as const;
+
 
 const acceptedFileTypes = new Map([
   [".pdf", "application/pdf"],
@@ -383,7 +376,7 @@ async function handleSubmit(event: FormEvent<HTMLFormElement>) {
   }
 }
 
-function startAnotherDemo() {
+function startAnotherRequest() {
   setReferenceNumber("");
   setSubmitError("");
   setStep("form");
@@ -467,20 +460,21 @@ function startAnotherDemo() {
           {step === "confirmation" ? (
             <section aria-labelledby="request-confirmation-title" className="request-confirmation">
               <span className="request-confirmation-icon" aria-hidden="true">✓</span>
-              <span className="request-eyebrow">LOCAL DEMO REFERENCE</span>
-              <h2 id="request-confirmation-title">This demonstration is complete</h2>
+              <span className="request-eyebrow">REQUEST SUBMITTED</span>
+              <h2 id="request-confirmation-title">Your request has been saved successfully</h2>
               <p>
-                The reference below was generated in your browser for demonstration purposes only.
-                It is not an official RTI number, and no application was submitted or received.
+              Your request has been saved in the Soochna prototype database.
+              This is an academic prototype reference, not an official government
+              RTI acknowledgement.
               </p>
               <div className="request-demo-reference">
-                <span>DEMONSTRATION REFERENCE</span>
-                <strong>{referenceNumber}</strong>
-                <small>This reference is not stored. Note it now if you need it for this demo.</small>
+              <span>SOOCHNA REFERENCE NUMBER</span>
+              <strong>{referenceNumber}</strong>
+              <small>Keep this reference number to identify your request in the prototype.</small>
               </div>
               <div className="request-confirmation-actions">
-                <button className="button button--navy" onClick={startAnotherDemo} type="button">
-                  Start another demonstration
+                <button className="button button--navy" onClick={startAnotherRequest} type="button">
+                  Submit another request
                 </button>
                 <Link className="button button--text" href="/citizen/dashboard">
                   Return to dashboard

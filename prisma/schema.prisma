@@ -54,9 +54,10 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  accounts Account[]
-  sessions Session[]
-  requests RtiRequest[]
+  accounts    Account[]
+  sessions    Session[]
+  requests    RtiRequest[]
+  memberships DepartmentMembership[]
 }
 
 model Account {
@@ -121,12 +122,55 @@ model RtiRequest {
 
   status RequestStatus @default(SUBMITTED)
 
-  createdAt   DateTime @default(now())
-  submittedAt DateTime @default(now())
+  createdAt     DateTime               @default(now())
+  submittedAt   DateTime               @default(now())
+  statusHistory RequestStatusHistory[]
 
   @@index([email])
   @@index([departmentId])
   @@index([status])
   @@index([createdAt])
   @@index([userId])
+}
+
+model RequestStatusHistory {
+  id String @id @default(cuid())
+
+  requestId String
+  request   RtiRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
+  fromStatus RequestStatus?
+  toStatus   RequestStatus
+
+  remarks   String? @db.Text
+  changedBy String?
+
+  createdAt DateTime @default(now())
+
+  @@index([requestId, createdAt])
+  @@index([changedBy])
+}
+
+model Department {
+  id        String   @id
+  name      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  memberships DepartmentMembership[]
+}
+
+model DepartmentMembership {
+  id           String   @id @default(cuid())
+  userId       String
+  departmentId String
+  isActive     Boolean  @default(true)
+  assignedAt   DateTime @default(now())
+
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  department Department @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, departmentId])
+  @@index([userId])
+  @@index([departmentId])
 }

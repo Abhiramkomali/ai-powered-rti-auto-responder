@@ -1,13 +1,6 @@
 import { z } from "zod";
+import { departments } from "@/lib/domain/departments";
 
-const departments = [
-  "public-works",
-  "education",
-  "health",
-  "revenue",
-  "municipal-administration",
-  "transport",
-] as const;
 
 export const createRequestSchema = z
   .object({
@@ -19,7 +12,12 @@ export const createRequestSchema = z
     district: z.string().trim().min(2).max(100),
     pinCode: z.string().regex(/^\d{6}$/, "Enter a valid 6-digit PIN code"),
 
-    departmentId: z.enum(departments),
+  departmentId: z.enum(
+  departments.map((department) => department.id) as [
+    (typeof departments)[number]["id"],
+    ...(typeof departments)[number]["id"][],
+  ],
+),
 
     subject: z.string().trim().min(5).max(200),
     description: z.string().trim().min(20).max(5000),

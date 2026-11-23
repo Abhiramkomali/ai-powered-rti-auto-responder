@@ -78,28 +78,42 @@ export async function POST(request: Request) {
 
   try {
     // Save the request in PostgreSQL.
-    const savedRequest = await prisma.rtiRequest.create({
-      data: {
-        referenceNumber,
-        fullName: result.data.fullName,
-        email: result.data.email,
-        mobile: result.data.mobile,
-        address: result.data.address,
-        state: result.data.state,
-        district: result.data.district,
-        pinCode: result.data.pinCode,
-        departmentId: result.data.departmentId,
-        subject: result.data.subject,
-        description: result.data.description,
-        dateFrom: result.data.dateFrom
-          ? new Date(`${result.data.dateFrom}T00:00:00.000Z`)
-          : null,
-        dateTo: result.data.dateTo
-          ? new Date(`${result.data.dateTo}T00:00:00.000Z`)
-          : null,
-        responseFormat: result.data.responseFormat,
-      },
-    });
+   // Save the request and its initial status history together.
+const savedRequest = await prisma.$transaction(async (tx) => {
+  const newRequest = await tx.rtiRequest.create({
+    data: {
+      referenceNumber,
+      fullName: result.data.fullName,
+      email: result.data.email,
+      mobile: result.data.mobile,
+      address: result.data.address,
+      state: result.data.state,
+      district: result.data.district,
+      pinCode: result.data.pinCode,
+      departmentId: result.data.departmentId,
+      subject: result.data.subject,
+      description: result.data.description,
+      dateFrom: result.data.dateFrom
+        ? new Date(`${result.data.dateFrom}T00:00:00.000Z`)
+        : null,
+      dateTo: result.data.dateTo
+        ? new Date(`${result.data.dateTo}T00:00:00.000Z`)
+        : null,
+      responseFormat: result.data.responseFormat,
+    },
+  });
+
+  await tx.requestStatusHistory.create({
+    data: {
+      requestId: newRequest.id,
+      fromStatus: null,
+      toStatus: "SUBMITTED",
+      remarks: "RTI request submitted by citizen.",
+    },
+  });
+
+  return newRequest;
+});
 
     // Return the saved request information.
     const response: ApiResponse<{
