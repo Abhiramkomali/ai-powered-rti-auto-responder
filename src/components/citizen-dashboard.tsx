@@ -1,6 +1,10 @@
+"use client";
+
 import type { ReactNode } from "react";
 import Link from "next/link";
+import { signOut } from "next-auth/react";
 
+import { AiAssistant } from "@/components/ai-assistant";
 import type { RequestStatus } from "@/lib/domain/requests";
 import type { RtiRequestSummary } from "@/lib/contracts/api";
 
@@ -274,17 +278,15 @@ function DashboardSidebar() {
       <div className="dashboard-sidebar-bottom">
         <div className="dashboard-sidebar-note">
           <span className="dashboard-note-mark" aria-hidden="true">i</span>
-          <p>Demonstration portal. No official application is being processed.</p>
+          <p>Prototype portal for learning and local demonstration.</p>
         </div>
         <button
-          aria-disabled="true"
           className="dashboard-nav-link dashboard-logout"
-          title="Logout is unavailable in this demonstration"
           type="button"
+          onClick={() => void signOut({ callbackUrl: "/" })}
         >
           <Icon name="logout" />
           <span>Logout</span>
-          <span className="dashboard-placeholder-tag">Demo</span>
         </button>
       </div>
     </aside>
@@ -330,7 +332,7 @@ function ApplicationTable({ state }: { state: ApplicationListState }) {
     return (
       <div aria-busy="true" className="dashboard-table-state" role="status">
         <span className="dashboard-loading-indicator" />
-        <span>Loading your demonstration applications…</span>
+        <span>Loading your applications…</span>
       </div>
     );
   }
@@ -425,9 +427,20 @@ function getApplicationCounts(applications: readonly RtiRequestSummary[]) {
   };
 }
 
-export function CitizenDashboard() {
+interface CitizenDashboardProps {
+  applications?: readonly RtiRequestSummary[];
+  citizenName?: string;
+  providerConfigured?: boolean;
+}
+
+export function CitizenDashboard({
+  applications: suppliedApplications,
+  citizenName = "Citizen",
+  providerConfigured = false,
+}: CitizenDashboardProps = {}) {
   const applications =
-    applicationListState.kind === "ready" ? applicationListState.applications : [];
+    suppliedApplications ??
+    (applicationListState.kind === "ready" ? applicationListState.applications : []);
   const counts = getApplicationCounts(applications);
 
   return (
@@ -439,10 +452,12 @@ export function CitizenDashboard() {
             Citizen services <span aria-hidden="true">/</span> <strong>Overview</strong>
           </div>
           <a className="dashboard-user" href="#profile">
-            <span className="dashboard-avatar" aria-hidden="true">C</span>
+            <span className="dashboard-avatar" aria-hidden="true">
+              {citizenName.trim().charAt(0).toUpperCase() || "C"}
+            </span>
             <span className="dashboard-user-copy">
-              <strong>Citizen</strong>
-              <span>Demonstration profile</span>
+              <strong>{citizenName}</strong>
+              <span>Citizen account</span>
             </span>
           </a>
         </header>
@@ -460,17 +475,9 @@ export function CitizenDashboard() {
             </Link>
           </section>
 
-          <div className="dashboard-demo-notice" role="note">
-            <span className="dashboard-demo-notice-icon" aria-hidden="true">i</span>
-            <p>
-              <strong>Demonstration data:</strong> The applications and figures below are fictional
-              examples. This portal does not submit or process actual government applications.
-            </p>
-          </div>
-
           <section aria-label="Application summary" className="dashboard-stats">
             <StatCard
-              detail="Across this demo account"
+              detail="Across your account"
               icon="file"
               label="Total RTI requests"
               tone="navy"
@@ -516,7 +523,7 @@ export function CitizenDashboard() {
             </div>
             <ApplicationTable state={applicationListState} />
             <div className="dashboard-table-footnote">
-              Showing {applications.length} fictional demonstration applications
+              Showing {applications.length} application{applications.length === 1 ? "" : "s"}
             </div>
           </section>
 
@@ -524,13 +531,23 @@ export function CitizenDashboard() {
             <span className="dashboard-profile-icon"><Icon name="profile" /></span>
             <div>
               <span className="dashboard-section-kicker">PROFILE</span>
-              <h2>Demonstration citizen</h2>
-              <p>Account details and profile management are not available in this prototype.</p>
+              <h2>{citizenName}</h2>
+              <p>Citizen account for submitting and tracking RTI requests.</p>
             </div>
           </section>
 
+          <AiAssistant
+            audience="citizen"
+            providerConfigured={providerConfigured}
+            requests={applications.map(({ id, referenceNumber, subject }) => ({
+              id,
+              referenceNumber,
+              subject,
+            }))}
+          />
+
           <footer className="dashboard-footer">
-            <span>Soochna · Citizen services demonstration</span>
+            <span>Soochna · Citizen services</span>
             <Link href="/">Return to Soochna home <Icon name="arrow" /></Link>
           </footer>
         </div>

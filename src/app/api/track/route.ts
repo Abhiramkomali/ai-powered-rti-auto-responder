@@ -92,6 +92,9 @@ export async function POST(request: Request) {
         departmentId: true,
         status: true,
         submittedAt: true,
+        finalResponse: {
+          select: { content: true, issuedAt: true },
+        },
       },
     });
 
@@ -115,6 +118,7 @@ export async function POST(request: Request) {
       departmentId: string;
       status: string;
       submittedAt: string;
+      finalResponse: { content: string; issuedAt: string } | null;
     }> = {
       ok: true,
       data: {
@@ -122,6 +126,12 @@ export async function POST(request: Request) {
         departmentId: savedRequest.departmentId,
         status: savedRequest.status,
         submittedAt: savedRequest.submittedAt.toISOString(),
+        finalResponse: savedRequest.finalResponse
+          ? {
+              content: savedRequest.finalResponse.content,
+              issuedAt: savedRequest.finalResponse.issuedAt.toISOString(),
+            }
+          : null,
       },
       requestId,
     };

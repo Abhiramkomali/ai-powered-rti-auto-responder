@@ -125,6 +125,8 @@ model RtiRequest {
   createdAt     DateTime               @default(now())
   submittedAt   DateTime               @default(now())
   statusHistory RequestStatusHistory[]
+  responseDraft RtiResponseDraft[]
+  finalResponse RtiFinalResponse?
 
   @@index([email])
   @@index([departmentId])
@@ -158,6 +160,7 @@ model Department {
   updatedAt DateTime @updatedAt
 
   memberships DepartmentMembership[]
+  records     DepartmentRecord[]
 }
 
 model DepartmentMembership {
@@ -173,4 +176,70 @@ model DepartmentMembership {
   @@unique([userId, departmentId])
   @@index([userId])
   @@index([departmentId])
+}
+
+model DepartmentRecord {
+  id               String     @id @default(cuid())
+  departmentId     String
+  department       Department @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  title            String
+  description      String     @db.Text
+  category         String
+  referenceNumber  String
+  documentType     String
+  relevantDateFrom DateTime?  @db.Date
+  relevantDateTo   DateTime?  @db.Date
+  storageReference String?
+  isDemo           Boolean    @default(true)
+  createdBy        String?
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+
+  @@unique([departmentId, referenceNumber])
+  @@index([departmentId])
+  @@index([category])
+  @@index([relevantDateFrom, relevantDateTo])
+}
+
+model RtiResponseDraft {
+  id            String            @id @default(cuid())
+  requestId     String
+  request       RtiRequest        @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  content       String            @db.Text
+  aiGenerated   Boolean           @default(false)
+  status        String            @default("DRAFT")
+  createdBy     String
+  approvedBy    String?
+  approvedAt    DateTime?
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+  finalResponse RtiFinalResponse?
+
+  @@index([requestId, updatedAt])
+}
+
+model RtiFinalResponse {
+  id        String           @id @default(cuid())
+  requestId String           @unique
+  request   RtiRequest       @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  draftId   String           @unique
+  draft     RtiResponseDraft @relation(fields: [draftId], references: [id], onDelete: Restrict)
+  content   String           @db.Text
+  issuedBy  String
+  issuedAt  DateTime         @default(now())
+
+  @@index([issuedAt])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorId    String?
+  action     String
+  entityType String
+  entityId   String
+  details    String?  @db.Text
+  createdAt  DateTime @default(now())
+
+  @@index([entityType, entityId, createdAt])
+  @@index([actorId, createdAt])
 }

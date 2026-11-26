@@ -4,6 +4,9 @@ import { redirect } from "next/navigation";
 import { connection } from "next/server";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { OfficerRequestActions } from "@/components/officer-request-actions";
+import { AiAssistant } from "@/components/ai-assistant";
+import { isAssistantConfigured } from "@/lib/ai/assistant";
 
 import styles from "./requests.module.css";
 
@@ -223,10 +226,25 @@ export default async function OfficerRequestsPage() {
                   </div>
                 </div>
               </details>
+              <OfficerRequestActions
+                requestId={request.id}
+                referenceNumber={request.referenceNumber}
+                initialStatus={request.status}
+                actorRole={user.role}
+              />
             </article>
           ))}
         </section>
       )}
+      <AiAssistant
+        audience="officer"
+        providerConfigured={isAssistantConfigured()}
+        requests={requests.map(({ id, referenceNumber, subject }) => ({
+          id,
+          referenceNumber,
+          subject,
+        }))}
+      />
     </main>
   );
 }

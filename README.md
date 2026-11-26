@@ -3,8 +3,7 @@
 A Next.js application to help citizens submit and track Right to Information (RTI) requests and help public authority officers process them. AI assistance is limited to classification and preparation of cited response drafts. Authorized officers retain responsibility for review, approval, and issuance.
 
 ## Project status
-
-The repository contains a responsive public landing page and foundation-stage placeholders for the planned citizen and officer routes, alongside the approved architecture and shared TypeScript contracts. The placeholders do not process accounts or requests. Authentication, database integration, AI workflows, and functional application portals have not yet been implemented.
+The prototype includes citizen registration and RTI submission, tracking, department-aware officer workspaces, departmental record metadata, Gemini/Groq AI assistance, saved response drafts, PIO approval and issue workflows, and approved citizen-visible responses. Functional deployment and end-to-end manual verification are still required.
 
 ## Architecture and contribution
 

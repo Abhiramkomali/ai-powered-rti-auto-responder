@@ -1,13 +1,16 @@
 
 import { randomBytes, randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
 
 import { prisma } from "@/lib/prisma";
+import { authOptions } from "@/lib/auth";
 import { createRequestSchema } from "@/lib/request";
 import type { ApiResponse } from "@/lib/contracts/api";
 
 export async function POST(request: Request) {
   const requestId = randomUUID();
+  const session = await getServerSession(authOptions);
 
   // Check the request content type.
   if (!request.headers.get("content-type")?.includes("application/json")) {
@@ -77,15 +80,51 @@ export async function POST(request: Request) {
     .replaceAll("-", "")}-${randomBytes(3).toString("hex").toUpperCase()}`;
 
   try {
+    const normalizedMobile = result.data.mobile.replace(/^(?:\+91|91)[\s-]?/, "");
+    const department = await prisma.department.findUnique({
+      where: { id: result.data.departmentId },
+      select: { id: true },
+    });
+    if (!department) {
+      return NextResponse.json<ApiResponse<never>>(
+        {
+          ok: false,
+          error: { code: "NOT_FOUND", message: "The selected department is not available." },
+          requestId,
+        },
+        { status: 404 },
+      );
+    }
+
+    let userId: string | null = null;
+    if (session?.user?.id) {
+      const user = await prisma.user.findUnique({
+        where: { id: session.user.id },
+        select: { id: true, role: true, isActive: true, email: true },
+      });
+      if (!user?.isActive || user.role !== "CITIZEN") {
+        return NextResponse.json<ApiResponse<never>>(
+          {
+            ok: false,
+            error: { code: "FORBIDDEN", message: "Only citizen accounts can submit RTI requests." },
+            requestId,
+          },
+          { status: 403 },
+        );
+      }
+      userId = user.id;
+    }
+
     // Save the request in PostgreSQL.
    // Save the request and its initial status history together.
 const savedRequest = await prisma.$transaction(async (tx) => {
   const newRequest = await tx.rtiRequest.create({
     data: {
       referenceNumber,
+  userId,
       fullName: result.data.fullName,
       email: result.data.email,
-      mobile: result.data.mobile,
+  mobile: normalizedMobile,
       address: result.data.address,
       state: result.data.state,
       district: result.data.district,

@@ -15,6 +15,7 @@ type TrackApiResult =
         departmentId: string;
         status: string;
         submittedAt: string;
+        finalResponse: { content: string; issuedAt: string } | null;
       };
       requestId: string;
     }
@@ -238,6 +239,13 @@ export default function CitizenTrackPage() {
                       <dd>{formatDate(request.submittedAt)}</dd>
                     </div>
                   </dl>
+                  {request.finalResponse && (
+                    <div style={{ marginTop: "1.5rem", borderTop: "1px solid var(--line)", paddingTop: "1rem" }}>
+                      <span className="eyebrow">AUTHORIZED RESPONSE</span>
+                      <p style={{ whiteSpace: "pre-wrap", marginTop: "0.7rem" }}>{request.finalResponse.content}</p>
+                      <small>Issued {formatDate(request.finalResponse.issuedAt)}</small>
+                    </div>
+                  )}
                 </div>
               </section>
             )}

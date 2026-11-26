@@ -1,8 +1,11 @@
-
+import { loadEnvConfig } from "@next/env";
 import { hash } from "bcryptjs";
 import { PrismaClient } from "../src/generated/prisma/client";
 
+loadEnvConfig(process.cwd());
+
 const prisma = new PrismaClient();
+
 
 async function main() {
   const email = process.env.TEST_OFFICER_EMAIL?.trim().toLowerCase();
