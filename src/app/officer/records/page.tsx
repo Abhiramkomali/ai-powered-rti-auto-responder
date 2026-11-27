@@ -6,6 +6,8 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { DepartmentRecordManager } from "@/components/department-record-manager";
 
+export const instant = false;
+
 export default async function OfficerRecordsPage() {
   await connection();
   const session = await getServerSession(authOptions);

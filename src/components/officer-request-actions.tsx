@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 
 import {
   permittedRequestStatusTransitions,
@@ -27,6 +27,51 @@ export function OfficerRequestActions({
   const [draftMessage, setDraftMessage] = useState("");
   const [draftError, setDraftError] = useState("");
   const [isDraftSaving, setIsDraftSaving] = useState(false);
+
+  useEffect(() => {
+  let cancelled = false;
+
+  async function loadLatestDraft() {
+    try {
+      const response = await fetch(
+        `/api/requests/${encodeURIComponent(requestId)}/draft`,
+        { cache: "no-store" }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok || !result.ok) {
+        throw new Error(
+          result.error?.message ?? "Unable to load the saved draft."
+        );
+      }
+
+      const drafts = Array.isArray(result.data)
+        ? result.data
+        : Array.isArray(result)
+          ? result
+          : [];
+
+      if (!cancelled) {
+        setDraft(drafts[0]?.content ?? "");
+      }
+    } catch (loadError) {
+      if (!cancelled) {
+        setDraftError(
+          loadError instanceof Error
+            ? loadError.message
+            : "Unable to load the saved draft."
+        );
+      }
+    }
+  }
+
+  void loadLatestDraft();
+
+  return () => {
+    cancelled = true;
+  };
+}, [requestId]);
 
   const options = permittedRequestStatusTransitions[status];
 
@@ -70,7 +115,8 @@ export function OfficerRequestActions({
       });
       const result = await response.json();
       if (!response.ok || !result.ok) throw new Error(result.error?.message ?? "Unable to save the draft.");
-      setDraftMessage("Response draft saved as a separate editable record.");
+      setDraft(result.data?.content ?? draft);
+      setDraftMessage("Response draft saved successfully.");
     } catch (saveError) {
       setDraftError(saveError instanceof Error ? saveError.message : "Unable to save the draft.");
     } finally {

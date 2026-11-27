@@ -126,12 +126,13 @@ export async function POST(request: Request) {
         departmentId: savedRequest.departmentId,
         status: savedRequest.status,
         submittedAt: savedRequest.submittedAt.toISOString(),
-        finalResponse: savedRequest.finalResponse
-          ? {
-              content: savedRequest.finalResponse.content,
-              issuedAt: savedRequest.finalResponse.issuedAt.toISOString(),
-            }
-          : null,
+        finalResponse:
+  savedRequest.status === "RESPONSE_ISSUED" && savedRequest.finalResponse
+    ? {
+        content: savedRequest.finalResponse.content,
+        issuedAt: savedRequest.finalResponse.issuedAt.toISOString(),
+      }
+    : null,
       },
       requestId,
     };
